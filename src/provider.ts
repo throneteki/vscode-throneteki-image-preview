@@ -28,16 +28,17 @@ export class ImageProvider implements vscode.TextDocumentContentProvider {
         }
 
         let text = editor.document.getText();
-        let match = text.match(/(\w+)\.code = '(\d{5})'/);
+        let match = text.match(/(\w+)\.(code|id) = '(\d{5}|(\w|-)+)'/);
 
         if(!match) {
             return this.renderBody('No card implementation');
         }
 
         let cardName = match[1];
-        let code = match[2];
+        let codeOrId = match[2];
+        let code = match[3];
 
-        return this.renderBody(this.renderPreview(cardName, code));
+        return this.renderBody(this.renderPreview(codeOrId, cardName, code));
     }
 
     private renderBody(content: string) {
@@ -50,7 +51,8 @@ export class ImageProvider implements vscode.TextDocumentContentProvider {
             </body>`;
     }
 
-    private renderPreview(cardName: string, code: string): string {
-        return `<img src="https://throneteki.net/img/cards/${code}.png" alt="${cardName}" />`;
+    private renderPreview(codeOrId: string, cardName: string, code: string): string {
+        let url = codeOrId === 'code' ? `https://throneteki.net/img/cards/${code}.png` : `https://jigoku.online/img/cards/${code}.jpg`;
+        return `<img src="${url}" alt="${cardName}" />`;
     }
 }
