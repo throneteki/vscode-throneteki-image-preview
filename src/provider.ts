@@ -7,7 +7,24 @@ export class ImageProvider implements vscode.TextDocumentContentProvider {
     private _onDidChange = new vscode.EventEmitter<vscode.Uri>();
 
     public provideTextDocumentContent(uri: vscode.Uri): vscode.ProviderResult<string> {
-        return this.createCssSnippet();
+        let editor = vscode.window.activeTextEditor;
+        if(!editor) {
+            return this.renderBody('No card implementation');
+        }
+
+        if (!(editor.document.languageId === 'javascript')) {
+            return this.renderBody('No card implementation');
+        }
+
+        return this.getImplementation(editor.document).then(text => {
+            let card = CardInfo.parseFromFile(text);
+
+            if(!card) {
+                return this.renderBody('No card implementation');
+            }
+
+            return this.renderBody(this.renderPreview(card));
+        });
     }
 
     get onDidChange(): vscode.Event<vscode.Uri> {
@@ -18,23 +35,26 @@ export class ImageProvider implements vscode.TextDocumentContentProvider {
         this._onDidChange.fire(uri);
     }
 
-    private createCssSnippet() {
-        let editor = vscode.window.activeTextEditor;
-        if(!editor) {
-            return this.renderBody('No card implementation');
+    private getImplementation(document: vscode.TextDocument): Thenable<string> {
+        if(document.fileName.match(/\.spec.js$/)) {
+            return this.getImplementationForSpecFile(document.fileName);
         }
 
-        if (!(editor.document.languageId === 'javascript')) {
-            return this.renderBody('No card implementation');
-        }
+        return Promise.resolve(document.getText());
+    }
 
-        let card = CardInfo.parseFromFile(editor.document.getText());
+    getImplementationForSpecFile(fileName: string) {
+        let path = fileName.split('/');
+        let implementationFileName = path[path.length - 1].replace('.spec', '');
+        return vscode.workspace.findFiles(`**/${implementationFileName}`).then(uris => {
+            if(uris.length === 0) {
+                return '';
+            }
 
-        if(!card) {
-            return this.renderBody('No card implementation');
-        }
-
-        return this.renderBody(this.renderPreview(card));
+            return vscode.workspace.openTextDocument(uris[0]).then(implementationDocument => {
+                return implementationDocument.getText();
+            });
+        });
     }
 
     private renderBody(content: string) {
