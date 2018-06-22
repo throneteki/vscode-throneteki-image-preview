@@ -45,7 +45,7 @@ export class ImageProvider implements vscode.TextDocumentContentProvider {
 
     getImplementationForSpecFile(fileName: string) {
         let path = fileName.split('/');
-        let implementationFileName = path[path.length - 1].replace('.spec', '');
+        let implementationFileName = path[path.length - 2] + '/' + path[path.length - 1].replace('.spec', '');
         return vscode.workspace.findFiles(`**/${implementationFileName}`).then(uris => {
             if(uris.length === 0) {
                 return '';
