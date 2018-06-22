@@ -1,6 +1,7 @@
 'use strict';
 
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { CardInfo } from "./CardInfo";
 
 export class ImageProvider implements vscode.TextDocumentContentProvider {
@@ -44,8 +45,9 @@ export class ImageProvider implements vscode.TextDocumentContentProvider {
     }
 
     getImplementationForSpecFile(fileName: string) {
-        let path = fileName.split('/');
-        let implementationFileName = path[path.length - 2] + '/' + path[path.length - 1].replace('.spec', '');
+        let baseName = path.basename(fileName);
+        let dirs = path.dirname(fileName).split(path.sep);
+        let implementationFileName = dirs[dirs.length - 1] + '/' + baseName.replace('.spec', '');
         return vscode.workspace.findFiles(`**/${implementationFileName}`).then(uris => {
             if(uris.length === 0) {
                 return '';
